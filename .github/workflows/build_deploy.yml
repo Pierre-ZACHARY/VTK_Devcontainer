@@ -12,9 +12,23 @@ jobs:
       -
         name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
+      - name: Login to GHCR
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Lowercase GITHUB_REPOSITORY
+        id: lowercase
+        run: |
+          lowercased="${GITHUB_REPOSITORY,,}"
+          echo "::set-output name=lowercased::$lowercased"
       -
         name: Build and push
         uses: docker/build-push-action@v5
         with:
-          push: true
-          tags: vtkdevcontainer:latest
+          push: ${{ github.event_name != 'pull_request' }}
+          platforms: linux/amd64,linux/arm64,linux/ppc64le,linux/s390x
+          tags: ghcr.io/${{ steps.lowercase.outputs.lowercased }}:latest
+          context: .
