@@ -1,17 +1,26 @@
-name: ci
+name: Build
 
+# Controls when the workflow will run
 on:
   push:
     branches:
       - 'master'
 
+# permissions are needed if pushing to ghcr.io
+permissions:
+  packages: write
+
 jobs:
-  docker:
+  build:
     runs-on: ubuntu-latest
     steps:
-      -
-        name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+      # Get the repository's code
+      - name: Checkout
+        uses: actions/checkout@v2
+      # https://github.com/docker/setup-buildx-action
+      - name: Set up Docker Buildx
+        id: buildx
+        uses: docker/setup-buildx-action@v1
       - name: Login to GHCR
         if: github.event_name != 'pull_request'
         uses: docker/login-action@v1
@@ -24,11 +33,10 @@ jobs:
         run: |
           lowercased="${GITHUB_REPOSITORY,,}"
           echo "::set-output name=lowercased::$lowercased"
-      -
-        name: Build and push
-        uses: docker/build-push-action@v5
+      - name: Build and push
+        uses: docker/build-push-action@v2
         with:
-          push: ${{ github.event_name != 'pull_request' }}
-          platforms: linux/amd64,linux/arm64,linux/ppc64le,linux/s390x
-          tags: ghcr.io/${{ steps.lowercase.outputs.lowercased }}:latest
           context: .
+          platforms: linux/amd64,linux/arm64,linux/ppc64le,linux/s390x
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ghcr.io/${{ steps.lowercase.outputs.lowercased }}:latest
