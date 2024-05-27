@@ -1,0 +1,11 @@
+cmake-build-debug/
+
+.devcontainer/
+
+.idea/
+
+
+.github/
+
+.gitignore
+.dockerignore
